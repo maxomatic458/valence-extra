@@ -1,0 +1,29 @@
+[package]
+name = "valence-extra"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+resolver = "2"
+members = [ 
+    "crates/chat",
+]
+
+[workspace.dependencies]
+bevy_ecs = "0.14.2"
+bevy_time = "0.14.2"
+valence = { git = "https://github.com/valence-rs/valence/" }
+tracing = "0.1.40"
+
+chat = { path = "crates/chat" }
+
+[features]
+default = ["chat"]
+chat = ["dep:chat"]
+
+[dev-dependencies]
+valence = { workspace = true }
+tracing = { workspace = true }
+
+[dependencies]
+chat = { workspace = true, optional = true }
