@@ -1,7 +1,7 @@
 // #![cfg(feature = "chat")]
-use std::time::Duration;
 
-use chat::*;
+use fall_damage::{FallDamagePlugin, FallingState};
+use utils::damage::{DamagePlugin, TakesDamage};
 use valence::prelude::*;
 const SPAWN_Y: i32 = 64;
 
@@ -9,13 +9,13 @@ pub fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
-        .add_plugins(ChatPlugin)
+        .add_plugins(DamagePlugin)
+        .add_plugins(FallDamagePlugin)
         .add_systems(Update, (init_clients, despawn_disconnected_clients))
         .run();
 }
 
 fn setup(
-    mut chat_channels: ResMut<ChatChannels>,
     mut commands: Commands,
     server: Res<Server>,
     dimensions: Res<DimensionTypeRegistry>,
@@ -37,34 +37,17 @@ fn setup(
         }
     }
 
-    // Global chat
-    chat_channels.add_channel(
-        0,
-        ChatChannelConfig {
-            hide_msg_for_sender: false,
-            required_prefix: None,
-            chat_cooldown: Some(Duration::from_secs_f32(0.5)),
-            global_prefix: None,
-        },
-    );
-
-    // Team chat
-    chat_channels.add_channel(
-        1,
-        ChatChannelConfig {
-            hide_msg_for_sender: false,
-            required_prefix: Some("@t".to_string()),
-            chat_cooldown: None,
-            global_prefix: Some("[§cTeam§r] ".to_string()),
-        },
-    );
+    let mut y = SPAWN_Y;
+    for z in 5..25 {
+        layer.chunk.set_block([5, y, z], BlockState::STONE);
+        y += 1;
+    }
 
     commands.spawn(layer);
 }
 
 #[allow(clippy::type_complexity)]
 fn init_clients(
-    mut chat_channels: ResMut<ChatChannels>,
     mut commands: Commands,
     mut clients: Query<
         (
@@ -74,7 +57,6 @@ fn init_clients(
             &mut VisibleChunkLayer,
             &mut VisibleEntityLayers,
             &mut GameMode,
-            &Username,
         ),
         Added<Client>,
     >,
@@ -87,7 +69,6 @@ fn init_clients(
         mut visible_chunk_layer,
         mut visible_entity_layers,
         mut game_mode,
-        username,
     ) in &mut clients
     {
         let layer = layers.single();
@@ -98,24 +79,15 @@ fn init_clients(
         visible_entity_layers.0.insert(layer);
         *game_mode = GameMode::Survival;
 
-        commands.entity(player_ent).insert(ChatAbility::default());
-
-        chat_channels.add_player_to_channel(
-            0,
-            player_ent,
-            PlayerChatChannelConfig {
-                permission: ChatChannelPermission::ReadWrite,
-                prefix: Some(format!("{}> ", username.0)),
-            },
-        );
-
-        chat_channels.add_player_to_channel(
-            1,
-            player_ent,
-            PlayerChatChannelConfig {
-                permission: ChatChannelPermission::ReadWrite,
-                prefix: Some(format!("{}> ", username.0)),
-            },
-        );
+        commands
+            .entity(player_ent)
+            .insert(TakesDamage {
+                show_hurt: true,
+                play_sound: true,
+                damage_multiplier: 1.0,
+                set_hp_after_death: 20.0,
+                suppress_death_event: false,
+            })
+            .insert(FallingState::new(pos.0));
     }
 }

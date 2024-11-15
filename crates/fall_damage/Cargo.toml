@@ -1,0 +1,8 @@
+[package]
+name = "fall_damage"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+valence = { workspace = true }
+utils = { workspace = true }

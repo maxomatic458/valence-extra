@@ -6,24 +6,35 @@ edition = "2021"
 [workspace]
 resolver = "2"
 members = [ 
-    "crates/chat",
+    "crates/chat", "crates/combat", "crates/fall_damage", "crates/physics", "crates/utils",
 ]
 
 [workspace.dependencies]
 bevy_ecs = "0.14.2"
 bevy_time = "0.14.2"
+valence_spatial = { git = "https://github.com/valence-rs/valence/" }
 valence = { git = "https://github.com/valence-rs/valence/" }
 tracing = "0.1.40"
 
 chat = { path = "crates/chat" }
+physics = { path = "crates/physics" }
+utils = { path = "crates/utils" }
+combat = { path = "crates/combat" }
+fall_damage = { path = "crates/fall_damage" }
 
 [features]
-default = ["chat"]
+default = ["chat", "combat", "fall_damage"]
 chat = ["dep:chat"]
+combat = ["dep:combat"]
+fall_damage = ["dep:fall_damage"]
 
 [dev-dependencies]
 valence = { workspace = true }
 tracing = { workspace = true }
 
+
 [dependencies]
 chat = { workspace = true, optional = true }
+combat = { workspace = true, optional = true }
+fall_damage = { workspace = true, optional = true }
+utils = { workspace = true }
