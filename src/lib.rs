@@ -1,2 +1,2 @@
-// #[cfg(feature = "chat")]
+#[cfg(feature = "chat")]
 pub use chat;
