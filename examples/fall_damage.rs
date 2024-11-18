@@ -3,6 +3,7 @@
 use fall_damage::{FallDamagePlugin, FallingState};
 use utils::damage::{DamagePlugin, TakesDamage};
 use valence::prelude::*;
+
 const SPAWN_Y: i32 = 64;
 
 pub fn main() {
@@ -82,11 +83,8 @@ fn init_clients(
         commands
             .entity(player_ent)
             .insert(TakesDamage {
-                show_hurt: true,
-                play_sound: true,
-                damage_multiplier: 1.0,
                 set_hp_after_death: 20.0,
-                suppress_death_event: false,
+                ..Default::default()
             })
             .insert(FallingState::new(pos.0));
     }

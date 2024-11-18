@@ -327,6 +327,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_time"
+version = "0.14.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4e4d53ec32a1b16492396951d04de0d2d90e924bf9adcb8d1adacab5ab6c17c"
+dependencies = [
+ "bevy_app",
+ "bevy_ecs",
+ "bevy_reflect",
+ "bevy_utils",
+ "crossbeam-channel",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "bevy_utils"
 version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -466,6 +480,8 @@ name = "combat"
 version = "0.1.0"
 dependencies = [
  "fall_damage",
+ "rand",
+ "tracing",
  "utils",
  "valence",
 ]
@@ -511,6 +527,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a97769d94ddab943e4510d138150169a2758b5ef3eb191a9ee688de3e23ef7b3"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "crossbeam-channel"
+version = "0.5.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33480d6946193aa8033910124896ca395333cae7e2d1113d1fef6c3272217df2"
+dependencies = [
+ "crossbeam-utils",
 ]
 
 [[package]]
@@ -1423,9 +1448,11 @@ dependencies = [
 name = "physics"
 version = "0.1.0"
 dependencies = [
+ "bevy_time",
  "utils",
  "valence",
  "valence_spatial",
+ "vek",
 ]
 
 [[package]]
@@ -2336,6 +2363,7 @@ checksum = "b6c140620e7ffbb22c2dee59cafe6084a59b5ffc27a8859a5f0d494b5d52b6be"
 name = "utils"
 version = "0.1.0"
 dependencies = [
+ "bevy_time",
  "valence",
 ]
 
@@ -2385,9 +2413,11 @@ dependencies = [
 name = "valence-extra"
 version = "0.1.0"
 dependencies = [
+ "bevy_time",
  "chat",
  "combat",
  "fall_damage",
+ "physics",
  "tracing",
  "utils",
  "valence",

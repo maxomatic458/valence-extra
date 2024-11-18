@@ -1,4 +1,9 @@
+pub mod aaab;
 pub mod damage;
+pub mod enchantments;
+pub mod item_values;
+
+pub use item_values::ItemKindExt;
 use valence::{math::Aabb, prelude::*};
 
 /// Returns a list of all the blocks that are inside (or intersect) the given AABB

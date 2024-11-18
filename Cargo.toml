@@ -11,10 +11,11 @@ members = [
 
 [workspace.dependencies]
 bevy_ecs = "0.14.2"
-bevy_time = "0.14.2"
 valence_spatial = { git = "https://github.com/valence-rs/valence/" }
 valence = { git = "https://github.com/valence-rs/valence/" }
 tracing = "0.1.40"
+rand = "0.8.5"
+bevy_time = "0.14.2"
 
 chat = { path = "crates/chat" }
 physics = { path = "crates/physics" }
@@ -23,10 +24,11 @@ combat = { path = "crates/combat" }
 fall_damage = { path = "crates/fall_damage" }
 
 [features]
-default = ["chat", "combat", "fall_damage"]
+default = ["chat", "combat", "fall_damage", "physics"]
 chat = ["dep:chat"]
 combat = ["dep:combat"]
 fall_damage = ["dep:fall_damage"]
+physics = ["dep:physics"]
 
 [dev-dependencies]
 valence = { workspace = true }
@@ -37,4 +39,7 @@ tracing = { workspace = true }
 chat = { workspace = true, optional = true }
 combat = { workspace = true, optional = true }
 fall_damage = { workspace = true, optional = true }
+physics = { workspace = true, optional = true }
+
 utils = { workspace = true }
+bevy_time = { workspace = true }

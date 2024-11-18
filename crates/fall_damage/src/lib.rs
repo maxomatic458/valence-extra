@@ -6,6 +6,7 @@ pub struct FallingState {
     /// Last position where the entity was on the ground.
     pub fall_start: DVec3,
     pub falling: bool,
+    pub in_air: bool,
     pub falling_state_config: FallingStateConfig,
 }
 
@@ -14,6 +15,7 @@ impl FallingState {
         Self {
             fall_start: start_pos,
             falling: false,
+            in_air: false,
             falling_state_config: FallingStateConfig::default(),
         }
     }
@@ -79,11 +81,13 @@ fn fall_damage_system(
 
                 fall_damage_state.falling = false;
                 fall_damage_state.fall_start = position.0;
+                fall_damage_state.in_air = false;
             }
         } else {
             // player is falling
+            fall_damage_state.in_air = true;
             if fall_damage_state.fall_start.y <= position.0.y {
-                fall_damage_state.fall_start.y = position.0.y
+                fall_damage_state.fall_start.y = position.0.y;
             } else {
                 fall_damage_state.falling = true;
             }

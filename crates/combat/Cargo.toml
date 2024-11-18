@@ -7,3 +7,5 @@ edition = "2021"
 valence = { workspace = true }
 utils = { workspace = true }
 fall_damage = { workspace = true }
+tracing = { workspace = true }
+rand = { workspace = true }

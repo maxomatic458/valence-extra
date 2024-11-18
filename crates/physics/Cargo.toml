@@ -6,4 +6,9 @@ edition = "2021"
 [dependencies]
 valence = { workspace = true }
 valence_spatial = { workspace = true }
+# bvh = "0.10.0"
+
 utils = { workspace = true }
+bevy_time = { workspace = true }
+vek = "0.17.1"
+# nalgebra = "0.33.2"
