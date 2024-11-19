@@ -1,4 +1,3 @@
-// #![cfg(feature = "chat")]
 use std::time::Duration;
 
 use chat::*;

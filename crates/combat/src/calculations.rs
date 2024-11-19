@@ -35,8 +35,8 @@ pub fn attack_cooldown_enchantment_damage(weapon_attack_speed: f32, last_attack:
     let elapsed_ticks = elapsed_millis as f32 / 50.0;
     let t = 20.0 / weapon_attack_speed;
 
-    let damage_multipler = 0.2 + ((elapsed_ticks + 0.5) / t) * 0.8;
-    damage_multipler.clamp(0.2, 1.0)
+    let damage_multiplier = 0.2 + ((elapsed_ticks + 0.5) / t) * 0.8;
+    damage_multiplier.clamp(0.2, 1.0)
 }
 
 /// Calculates the damage for the sharpness enchantment.

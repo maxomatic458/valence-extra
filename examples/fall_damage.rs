@@ -1,5 +1,6 @@
 // #![cfg(feature = "chat")]
 
+use bevy_time::TimePlugin;
 use fall_damage::{FallDamagePlugin, FallingState};
 use utils::damage::{DamagePlugin, TakesDamage};
 use valence::prelude::*;
@@ -10,6 +11,7 @@ pub fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
+        .add_plugins(TimePlugin)
         .add_plugins(DamagePlugin)
         .add_plugins(FallDamagePlugin)
         .add_systems(Update, (init_clients, despawn_disconnected_clients))

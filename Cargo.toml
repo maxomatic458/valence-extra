@@ -24,11 +24,13 @@ combat = { path = "crates/combat" }
 fall_damage = { path = "crates/fall_damage" }
 
 [features]
-default = ["chat", "combat", "fall_damage", "physics"]
+# default = ["chat", "combat", "fall_damage", "physics", "utils"]
+default = []
 chat = ["dep:chat"]
-combat = ["dep:combat"]
-fall_damage = ["dep:fall_damage"]
+combat = ["dep:combat", "dep:physics", "dep:fall_damage", "dep:utils"]
+fall_damage = ["dep:fall_damage", "dep:utils"]
 physics = ["dep:physics"]
+utils = ["dep:utils"]
 
 [dev-dependencies]
 valence = { workspace = true }
@@ -40,6 +42,21 @@ chat = { workspace = true, optional = true }
 combat = { workspace = true, optional = true }
 fall_damage = { workspace = true, optional = true }
 physics = { workspace = true, optional = true }
-
-utils = { workspace = true }
+utils = { workspace = true, optional = true }
 bevy_time = { workspace = true }
+
+[[example]]
+name = "chat"
+required-features = ["chat"]
+
+[[example]]
+name = "combat"
+required-features = ["combat"]
+
+[[example]]
+name = "fall_damage"
+required-features = ["fall_damage"]
+
+[[example]]
+name = "physics"
+required-features = ["physics"]

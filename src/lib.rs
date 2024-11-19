@@ -1,4 +1,10 @@
 #[cfg(feature = "chat")]
 pub use chat;
+#[cfg(feature = "combat")]
+pub use combat;
+#[cfg(feature = "fall_damage")]
+pub use fall_damage;
 #[cfg(feature = "physics")]
 pub use physics;
+#[cfg(feature = "utils")]
+pub use utils;
