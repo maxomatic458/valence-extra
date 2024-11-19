@@ -18,6 +18,7 @@ use valence::{
         living::StuckArrowCount,
         EntityId, EntityStatuses, Velocity,
     },
+    hand_swing::HandSwingEvent,
     inventory::{HeldItem, UpdateSelectedSlotEvent},
     prelude::*,
 };
@@ -364,7 +365,14 @@ pub struct CombatPlugin;
 
 impl Plugin for CombatPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (combat_system, update_last_attack_on_item_switch));
+        app.add_systems(
+            Update,
+            (
+                combat_system,
+                update_last_attack_on_item_switch,
+                on_hand_swing,
+            ),
+        );
     }
 }
 
@@ -410,12 +418,6 @@ fn combat_system(
         if attacker.state.last_hit.elapsed() < attacker.state.combat_config.hit_cooldown {
             continue;
         }
-
-        let now = Instant::now();
-
-        attacker.state.last_hit = now;
-        attacker.state.last_attack = now;
-        victim.state.last_got_hit = now;
 
         let attacker_config = &attacker.state.combat_config;
         let victim_config = &victim.state.combat_config;
@@ -470,7 +472,7 @@ fn combat_system(
         if let Some(cooldown_multiplier) = &attacker_config.attack_cooldown_multiplier {
             base_damage = base_damage
                 * (attacker_config.damage_cooldown_formula_base_damage)(
-                    base_damage,
+                    weapon.item.attack_speed(),
                     attacker.state.last_attack,
                 )
                 * cooldown_multiplier;
@@ -505,17 +507,19 @@ fn combat_system(
             start_burn_event_writer.send(burn_event);
         }
 
-        let enchantment_extra_dmg = damage - base_damage;
+        // let enchantment_extra_dmg = damage - base_damage;
+
+        // TODO: add this back
 
         // TODO: im not sure if this is actually applied after the base damage.
-        if let Some(cooldown_multiplier) = &attacker_config.attack_cooldown_multiplier {
-            damage = damage
-                * (attacker_config.damage_cooldown_enchantment_formula)(
-                    enchantment_extra_dmg,
-                    attacker.state.last_attack,
-                )
-                * cooldown_multiplier;
-        }
+        // if let Some(cooldown_multiplier) = &attacker_config.attack_cooldown_multiplier {
+        //     damage = damage
+        //         * (attacker_config.damage_cooldown_enchantment_formula)(
+        //             weapon.item.attack_speed(),
+        //             attacker.state.last_attack,
+        //         )
+        //         * cooldown_multiplier;
+        // }
 
         damage *= attacker_config.damage_multiplier.current(&attacker_state);
 
@@ -573,6 +577,12 @@ fn combat_system(
             victim.velocity.0 += knockback;
         }
 
+        let now = Instant::now();
+
+        attacker.state.last_hit = now;
+        attacker.state.last_attack = now;
+        victim.state.last_got_hit = now;
+
         damage_event_writer.send(DamageEvent {
             victim: victim_ent,
             attacker: Some(attacker_ent),
@@ -628,6 +638,14 @@ fn update_last_attack_on_item_switch(
                         .set_base_value(EntityAttribute::GenericAttackSpeed, attack_speed as f64);
                 }
             }
+        }
+    }
+}
+
+fn on_hand_swing(mut query: Query<CombatQuery>, mut events: EventReader<HandSwingEvent>) {
+    for event in events.read() {
+        if let Ok(mut combat_query) = query.get_mut(event.client) {
+            combat_query.state.last_attack = Instant::now();
         }
     }
 }

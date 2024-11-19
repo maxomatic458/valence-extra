@@ -3,7 +3,10 @@ use bevy_time::TimePlugin;
 use combat::{CombatPlugin, CombatState};
 use fall_damage::{FallDamagePlugin, FallingState};
 use physics::{Acceleration, BlockCollisionConfig, PhysicsPlugin, StopOnBlockCollision};
-use utils::damage::{DamageEvent, DamagePlugin, TakesDamage};
+use utils::{
+    damage::{DamageEvent, DamagePlugin, TakesDamage},
+    item_values::CombatSystem,
+};
 use valence::{
     entity::{zombie::ZombieEntityBundle, EntityStatuses},
     equipment::EquipmentInventorySync,
@@ -22,7 +25,12 @@ pub fn main() {
         .add_plugins(CombatPlugin)
         .add_systems(
             Update,
-            (init_clients, despawn_disconnected_clients, on_damage),
+            (
+                init_clients,
+                despawn_disconnected_clients,
+                on_damage,
+                on_player_sneak,
+            ),
         )
         .run();
 }
@@ -78,6 +86,7 @@ fn init_clients(
     mut clients: Query<
         (
             Entity,
+            &mut Client,
             &mut Position,
             &mut EntityLayerId,
             &mut VisibleChunkLayer,
@@ -91,6 +100,7 @@ fn init_clients(
 ) {
     for (
         player_ent,
+        mut client,
         mut pos,
         mut layer_id,
         mut visible_chunk_layer,
@@ -116,6 +126,8 @@ fn init_clients(
         inventory.set_slot(36, ItemStack::new(ItemKind::DiamondSword, 1, None));
         inventory.set_slot(37, ItemStack::new(ItemKind::DiamondPickaxe, 1, None));
         inventory.set_slot(38, ItemStack::new(ItemKind::DiamondAxe, 1, None));
+
+        client.send_chat_message("Sneak to switch the combat system (1.8/1.9+)");
     }
 }
 
@@ -127,6 +139,31 @@ fn on_damage(mut events: EventReader<DamageEvent>, mut clients: Query<&mut Clien
             };
 
             client.send_chat_message(format!("Damage: {}", event.damage));
+        }
+    }
+}
+
+fn on_player_sneak(
+    mut query: Query<(&mut Client, &mut CombatState), With<Client>>,
+    mut events: EventReader<SneakEvent>,
+) {
+    for event in events.read() {
+        if event.state != SneakState::Start {
+            continue;
+        }
+
+        let Ok((mut client, mut combat_state)) = query.get_mut(event.client) else {
+            continue;
+        };
+
+        if combat_state.combat_config.combat_system == CombatSystem::Old {
+            combat_state.combat_config.combat_system = CombatSystem::New;
+            combat_state.combat_config.attack_cooldown_multiplier = Some(1.0);
+            client.set_action_bar("Switched to new combat system");
+        } else {
+            combat_state.combat_config.combat_system = CombatSystem::Old;
+            combat_state.combat_config.attack_cooldown_multiplier = None;
+            client.set_action_bar("Switched to old combat system");
         }
     }
 }

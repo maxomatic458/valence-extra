@@ -36,6 +36,7 @@ impl EquipmentExt for Equipment {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CombatSystem {
     Old,
     New,
