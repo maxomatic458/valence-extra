@@ -5,6 +5,7 @@ pub trait AabbExt {
     fn width_y(&self) -> f64;
     fn width_z(&self) -> f64;
     fn translate(&self, translation: DVec3) -> Aabb;
+    fn volume(&self) -> f64;
 }
 
 impl AabbExt for Aabb {
@@ -22,5 +23,10 @@ impl AabbExt for Aabb {
 
     fn translate(&self, translation: DVec3) -> Aabb {
         Aabb::new(self.min() + translation, self.max() + translation)
+    }
+
+    fn volume(&self) -> f64 {
+        let width = self.max() - self.min();
+        width.x * width.y * width.z
     }
 }

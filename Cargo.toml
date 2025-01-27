@@ -6,7 +6,7 @@ edition = "2021"
 [workspace]
 resolver = "2"
 members = [ 
-    "crates/chat", "crates/combat", "crates/fall_damage", "crates/physics", "crates/utils",
+    "crates/bvh", "crates/chat", "crates/combat", "crates/fall_damage", "crates/physics", "crates/utils",
 ]
 
 [workspace.dependencies]
@@ -17,6 +17,7 @@ tracing = "0.1.40"
 rand = "0.8.5"
 bevy_time = "0.14.2"
 
+bvh = { path = "crates/bvh" }
 chat = { path = "crates/chat" }
 physics = { path = "crates/physics" }
 utils = { path = "crates/utils" }
@@ -26,10 +27,11 @@ fall_damage = { path = "crates/fall_damage" }
 [features]
 # default = ["chat", "combat", "fall_damage", "physics", "utils"]
 default = []
+bvh = ["dep:bvh", "dep:utils"]
 chat = ["dep:chat"]
 combat = ["dep:combat", "dep:physics", "dep:fall_damage", "dep:utils"]
 fall_damage = ["dep:fall_damage", "dep:utils"]
-physics = ["dep:physics"]
+physics = ["dep:physics", "dep:bvh"]
 utils = ["dep:utils"]
 
 [dev-dependencies]
@@ -38,6 +40,7 @@ tracing = { workspace = true }
 
 
 [dependencies]
+bvh = { workspace = true, optional = true }
 chat = { workspace = true, optional = true }
 combat = { workspace = true, optional = true }
 fall_damage = { workspace = true, optional = true }
@@ -59,4 +62,8 @@ required-features = ["fall_damage"]
 
 [[example]]
 name = "physics"
+required-features = ["physics"]
+
+[[example]]
+name = "shooting"
 required-features = ["physics"]

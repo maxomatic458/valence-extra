@@ -1,3 +1,5 @@
+#[cfg(feature = "bvh")]
+pub use bvh;
 #[cfg(feature = "chat")]
 pub use chat;
 #[cfg(feature = "combat")]

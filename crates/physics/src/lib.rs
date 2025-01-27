@@ -1,10 +1,9 @@
-pub mod bvh;
 pub mod utils;
 
 use ::utils::aaab::AabbExt;
 use bevy_ecs::query::QueryData;
 use bevy_time::Time;
-use bvh::BvhResource;
+use bvh::bvh_resource::{BvhResource, EntityBvhEntry};
 use utils::swept_aabb_collide;
 use valence::{entity::Velocity, math::Aabb, prelude::*};
 
@@ -20,7 +19,10 @@ pub struct SpeedLimit(pub f32);
 #[derive(Component)]
 pub struct Drag(pub Vec3);
 
-/// Sets the entity's velocity and to zero if the entity collides with a block on the given face.
+// TODO: add this for entity collisions as well
+// + make this configurable per movement axis.
+
+/// Sets the entity's velocity to zero if the entity collides with a block on the given face.
 ///
 /// If you want to stop an entity when it touches the top of the block, the face should be `Direction::Up`.
 #[derive(Component)]
@@ -57,7 +59,7 @@ impl StopOnBlockCollision {
 }
 
 /// The config for entity-entity collisions.
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct EntityCollisionConfig {
     /// The hitbox that will be used for entity collision detection.
     ///
@@ -79,6 +81,7 @@ pub struct BlockCollisionConfig {
 /// The event emitted when an entity collides with another entity.
 #[derive(Event, Debug)]
 pub struct EntityEntityCollisionEvent {
+    /// This entity is the one that performed the collision detection.
     pub entity1: Entity,
     pub entity2: Entity,
 }
@@ -100,7 +103,7 @@ impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<EntityEntityCollisionEvent>()
             .add_event::<EntityBlockCollisionEvent>()
-            .insert_resource(BvhResource::new())
+            .insert_resource(BvhResource::default())
             .add_systems(PreUpdate, (physics_system, rebuild_bvh));
     }
 }
@@ -121,11 +124,9 @@ struct PhysicsQuery {
 }
 
 fn physics_system(
-    // mut bvh: ResMut<BvhResource>,
-    // mut commands: Commands,
+    bvh: ResMut<BvhResource>,
     time: Res<Time>,
     mut query: Query<PhysicsQuery, Without<Client>>,
-    // mut collidable_entities: Query<(Entity, &Hitbox, &EntityCollisionConfig)>,
     mut entity_entity_collision_writer: EventWriter<EntityEntityCollisionEvent>,
     mut entity_block_collision_writer: EventWriter<EntityBlockCollisionEvent>,
     // TODO: support for multiple layers
@@ -314,6 +315,23 @@ fn physics_system(
         entity.position.0 += (entity.velocity.0 * time.delta_seconds()).as_dvec3();
 
         // TODO: entity collision
+
+        if let Some(entity_collision_config) = entity.entity_collision_config {
+            let aabb = entity_collision_config
+                .entity_collider_hitbox
+                .unwrap_or(entity.hitbox.get());
+
+            for other in bvh.get_in_range(aabb) {
+                if other.entity == entity.entity {
+                    continue;
+                }
+
+                entity_entity_collision_writer.send(EntityEntityCollisionEvent {
+                    entity1: entity.entity,
+                    entity2: other.entity,
+                });
+            }
+        }
     });
 
     for event in rx.try_iter() {
@@ -329,29 +347,27 @@ fn physics_system(
 }
 
 fn rebuild_bvh(
-    mut _commands: Commands,
     query: Query<PhysicsQuery, With<EntityCollisionConfig>>,
-    mut _bvh: ResMut<BvhResource>,
+    mut bvh: ResMut<BvhResource>,
 ) {
-    if query.is_empty() {}
+    if query.is_empty() {
+        return;
+    }
 
-    // TODO: custom spatial indexing
+    let mut entities = Vec::with_capacity(query.iter().len());
+    for entity in query.iter() {
+        let aabb = entity
+            .entity_collision_config
+            .as_ref()
+            .unwrap()
+            .entity_collider_hitbox
+            .unwrap_or(entity.hitbox.get());
 
-    // let mut entities: Vec<vek::Aabb<f64>> = Vec::new();
-    // println!("Adding entity to BVH");
-    // for entity in query.iter_mut() {
-    //     let aabb = entity.entity_collision_config.as_ref()
-    //         .unwrap()
-    //         .entity_collider_hitbox
-    //         .unwrap_or(entity.hitbox.get());
+        entities.push(EntityBvhEntry {
+            entity: entity.entity,
+            hitbox: aabb,
+        });
+    }
 
-    //     let aabb: vek::Aabb<f64> = vek::Aabb {
-    //         min: vek::Vec3::new(aabb.min().x, aabb.min().y, aabb.min().z),
-    //         max: vek::Vec3::new(aabb.max().x, aabb.max().y, aabb.max().z),
-    //     };
-
-    //     entities.push(aabb);
-    // }
-
-    // bvh.bvh.rebuild(entities);
+    bvh.build(entities);
 }

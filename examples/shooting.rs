@@ -1,13 +1,22 @@
 use bevy_time::TimePlugin;
 use physics::{
-    Acceleration, BlockCollisionConfig, Drag, EntityCollisionConfig, PhysicsPlugin, SpeedLimit,
+    Acceleration, BlockCollisionConfig, Drag, EntityBlockCollisionEvent, EntityCollisionConfig,
+    EntityEntityCollisionEvent, PhysicsPlugin, SpeedLimit,
 };
-use valence::entity::chicken::ChickenEntityBundle;
 use valence::entity::entity::NoGravity;
+use valence::entity::pig::PigEntityBundle;
+use valence::entity::snowball::SnowballEntityBundle;
 use valence::entity::Velocity;
+use valence::interact_item::InteractItemEvent;
+use valence::inventory::player_inventory::PlayerInventory;
 use valence::prelude::*;
+use valence::protocol::sound::{Sound, SoundCategory};
 
 const SPAWN_Y: i32 = 64;
+
+/// Marker component for the target.
+#[derive(Component)]
+struct TargetMarker;
 
 pub fn main() {
     App::new()
@@ -20,7 +29,9 @@ pub fn main() {
             (
                 init_clients,
                 despawn_disconnected_clients,
-                on_player_sneak_click,
+                on_player_right_click,
+                on_entity_block_collision,
+                on_entity_entity_collision,
             ),
         )
         .run();
@@ -48,21 +59,23 @@ fn setup(
         }
     }
 
-    let mut y = SPAWN_Y;
-    for z in 5..25 {
-        for y_inner in 0..y {
-            layer.chunk.set_block([5, y_inner, z], BlockState::STONE);
-        }
-        y += 1;
-    }
+    let layer_id = commands.spawn(layer).id();
 
-    commands.spawn(layer);
+    commands
+        .spawn(PigEntityBundle {
+            position: Position([0.0, f64::from(SPAWN_Y) + 1.0, 0.0].into()),
+            layer: valence::prelude::EntityLayerId(layer_id),
+            ..Default::default()
+        })
+        .insert(EntityCollisionConfig::default())
+        .insert(TargetMarker);
 }
 
 #[allow(clippy::type_complexity)]
 fn init_clients(
     mut clients: Query<
         (
+            &mut Inventory,
             &mut Position,
             &mut EntityLayerId,
             &mut VisibleChunkLayer,
@@ -74,6 +87,7 @@ fn init_clients(
     layers: Query<Entity, (With<ChunkLayer>, With<EntityLayer>)>,
 ) {
     for (
+        mut inventory,
         mut pos,
         mut layer_id,
         mut visible_chunk_layer,
@@ -88,20 +102,20 @@ fn init_clients(
         visible_chunk_layer.0 = layer;
         visible_entity_layers.0.insert(layer);
         *game_mode = GameMode::Survival;
+        inventory.set_slot(
+            PlayerInventory::hotbar_to_slot(4),
+            ItemStack::new(ItemKind::IronIngot, 1, None),
+        );
     }
 }
 
-fn on_player_sneak_click(
+fn on_player_right_click(
     mut commands: Commands,
-    query: Query<(&Position, &Look, &EntityLayerId), With<Client>>,
-    mut events: EventReader<SneakEvent>,
+    mut query: Query<(&mut Client, &Position, &Look, &EntityLayerId)>,
+    mut events: EventReader<InteractItemEvent>,
 ) {
     for event in events.read() {
-        if event.state != SneakState::Start {
-            continue;
-        }
-
-        let Ok((pos, look, layer_id)) = query.get(event.client) else {
+        let Ok((mut client, pos, look, layer_id)) = query.get_mut(event.client) else {
             continue;
         };
 
@@ -114,8 +128,16 @@ fn on_player_sneak_click(
             yaw.cos() * pitch.cos(),
         );
 
+        client.play_sound(
+            Sound::EntityArrowShoot,
+            SoundCategory::Neutral,
+            pos.0,
+            1.0,
+            1.0,
+        );
+
         commands
-            .spawn(ChickenEntityBundle {
+            .spawn(SnowballEntityBundle {
                 position: Position(
                     pos.0 + DVec3::new(0.0, 1.0, 0.0) + (direction * 2.0).as_dvec3(),
                 ),
@@ -128,6 +150,40 @@ fn on_player_sneak_click(
             .insert(Acceleration(Vec3::new(0.0, -20.0, 0.0)))
             .insert(Drag(Vec3::new(0.99 / 20.0, 0.99 / 20.0, 0.99 / 20.0)))
             .insert(SpeedLimit(100.0))
+            .insert(EntityCollisionConfig::default())
             .insert(BlockCollisionConfig::default());
+    }
+}
+
+fn on_entity_block_collision(
+    mut commands: Commands,
+    mut events: EventReader<EntityBlockCollisionEvent>,
+) {
+    for event in events.read() {
+        commands.entity(event.entity).insert(Despawned);
+    }
+}
+
+fn on_entity_entity_collision(
+    mut commands: Commands,
+    mut players: Query<(&mut Client, &Position)>,
+    target: Query<&TargetMarker>,
+    mut events: EventReader<EntityEntityCollisionEvent>,
+) {
+    for event in events.read() {
+        if target.get(event.entity2).is_ok() {
+            commands.entity(event.entity1).insert(Despawned);
+
+            for (mut client, pos) in players.iter_mut() {
+                client.send_chat_message("Hit!");
+                client.play_sound(
+                    Sound::EntityPigDeath,
+                    SoundCategory::Neutral,
+                    pos.0,
+                    1.0,
+                    1.0,
+                );
+            }
+        }
     }
 }
