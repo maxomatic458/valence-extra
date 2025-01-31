@@ -6,7 +6,13 @@ edition = "2021"
 [workspace]
 resolver = "2"
 members = [ 
-    "crates/bvh", "crates/chat", "crates/combat", "crates/fall_damage", "crates/physics", "crates/utils",
+    "crates/building", 
+    "crates/bvh", 
+    "crates/chat", 
+    "crates/combat", 
+    "crates/fall_damage", 
+    "crates/physics", 
+    "crates/utils",
 ]
 
 [workspace.dependencies]
@@ -17,6 +23,7 @@ tracing = "0.1.40"
 rand = "0.8.5"
 bevy_time = "0.14.2"
 
+building = { path = "crates/building" }
 bvh = { path = "crates/bvh" }
 chat = { path = "crates/chat" }
 physics = { path = "crates/physics" }
@@ -27,6 +34,8 @@ fall_damage = { path = "crates/fall_damage" }
 [features]
 # default = ["chat", "combat", "fall_damage", "physics", "utils"]
 default = []
+
+building = ["dep:building"]
 bvh = ["dep:bvh", "dep:utils"]
 chat = ["dep:chat"]
 combat = ["dep:combat", "dep:physics", "dep:fall_damage", "dep:utils"]
@@ -40,6 +49,7 @@ tracing = { workspace = true }
 
 
 [dependencies]
+building = { workspace = true, optional = true }
 bvh = { workspace = true, optional = true }
 chat = { workspace = true, optional = true }
 combat = { workspace = true, optional = true }
