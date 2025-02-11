@@ -33,7 +33,8 @@ fall_damage = { path = "crates/fall_damage" }
 
 [features]
 # default = ["chat", "combat", "fall_damage", "physics", "utils"]
-default = []
+# TODO: remove
+default = ["building"]
 
 building = ["dep:building"]
 bvh = ["dep:bvh", "dep:utils"]
