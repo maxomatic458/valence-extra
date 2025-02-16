@@ -147,7 +147,7 @@ fn physics_system(
     }
 
     enum PhysicsEvent {
-        _EntityEntityCollision(EntityEntityCollisionEvent),
+        EntityEntityCollision(EntityEntityCollisionEvent),
         EntityBlockCollision(EntityBlockCollisionEvent),
     }
 
@@ -336,7 +336,7 @@ fn physics_system(
 
     for event in rx.try_iter() {
         match event {
-            PhysicsEvent::_EntityEntityCollision(event) => {
+            PhysicsEvent::EntityEntityCollision(event) => {
                 entity_entity_collision_writer.send(event);
             }
             PhysicsEvent::EntityBlockCollision(event) => {
