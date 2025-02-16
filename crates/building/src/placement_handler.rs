@@ -1,4 +1,4 @@
-use bvh::bvh_resource::BvhResource;
+use bvh::bvh_resource::{BvhResource, ENTITY_BLOCK_BVH_IDX};
 use valence::{
     block::{BlockKind, PropName, PropValue},
     inventory::HeldItem,
@@ -47,7 +47,11 @@ pub fn on_try_place_default(
                 - tolerance,
         );
 
-        if bvh.get_in_range(block_hitbox).next().is_some() {
+        if bvh[ENTITY_BLOCK_BVH_IDX]
+            .get_in_range(block_hitbox)
+            .next()
+            .is_some()
+        {
             // TODO: this ignores the `BlockCollisionConfig` as defined in physics.
             // The block would intersect with another entity.
             return false;

@@ -91,6 +91,6 @@ fn init_clients(
         // TODO: make this be the [`physics::BlockCollisionConfig`]
         commands
             .entity(entity)
-            .insert(EntityCollisionConfig::default());
+            .insert(BlockCollisionConfig::default());
     }
 }

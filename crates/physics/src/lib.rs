@@ -3,7 +3,7 @@ pub mod utils;
 use ::utils::aaab::AabbExt;
 use bevy_ecs::query::QueryData;
 use bevy_time::Time;
-use bvh::bvh_resource::{BvhResource, EntityBvhEntry};
+use bvh::bvh_resource::{BvhResource, EntityBvhEntry, ENTITY_BLOCK_BVH_IDX, ENTITY_ENTITY_BVH_IDX};
 use utils::swept_aabb_collide;
 use valence::{entity::Velocity, math::Aabb, prelude::*};
 
@@ -103,7 +103,7 @@ impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<EntityEntityCollisionEvent>()
             .add_event::<EntityBlockCollisionEvent>()
-            .insert_resource(BvhResource::default())
+            .insert_resource(BvhResource::with_bvhs(2))
             .add_systems(PreUpdate, (physics_system, rebuild_bvh));
     }
 }
@@ -321,7 +321,7 @@ fn physics_system(
                 .entity_collider_hitbox
                 .unwrap_or(entity.hitbox.get());
 
-            for other in bvh.get_in_range(aabb) {
+            for other in bvh[ENTITY_ENTITY_BVH_IDX].get_in_range(aabb) {
                 if other.entity == entity.entity {
                     continue;
                 }
@@ -346,28 +346,48 @@ fn physics_system(
     }
 }
 
+#[allow(clippy::type_complexity)]
 fn rebuild_bvh(
-    query: Query<PhysicsQuery, With<EntityCollisionConfig>>,
+    query: Query<PhysicsQuery, Or<(With<EntityCollisionConfig>, With<BlockCollisionConfig>)>>,
     mut bvh: ResMut<BvhResource>,
 ) {
     if query.is_empty() {
         return;
     }
 
-    let mut entities = Vec::with_capacity(query.iter().len());
-    for entity in query.iter() {
-        let aabb = entity
-            .entity_collision_config
-            .as_ref()
-            .unwrap()
-            .entity_collider_hitbox
-            .unwrap_or(entity.hitbox.get());
+    let mut entity_entity_colls = vec![];
+    let mut entity_block_colls = vec![];
 
-        entities.push(EntityBvhEntry {
-            entity: entity.entity,
-            hitbox: aabb,
-        });
+    for entity in query.iter() {
+        if let Some(entity_collision_config) = entity.entity_collision_config {
+            let aabb = match entity_collision_config.entity_collider_hitbox {
+                Some(hitbox) => hitbox.translate(entity.position.0),
+                None => entity.hitbox.get(),
+            };
+
+            entity_entity_colls.push(EntityBvhEntry {
+                entity: entity.entity,
+                hitbox: aabb,
+            });
+        }
+
+        if let Some(block_collision_config) = entity.block_collision_config {
+            let aabb = match block_collision_config.block_collider_hitbox {
+                Some(hitbox) => hitbox.translate(entity.position.0),
+                None => entity.hitbox.get(),
+            };
+
+            entity_block_colls.push(EntityBvhEntry {
+                entity: entity.entity,
+                hitbox: aabb,
+            });
+        }
     }
 
-    bvh.build(entities);
+    bvh.get_mut(ENTITY_ENTITY_BVH_IDX)
+        .unwrap()
+        .build(entity_entity_colls);
+    bvh.get_mut(ENTITY_BLOCK_BVH_IDX)
+        .unwrap()
+        .build(entity_block_colls);
 }
