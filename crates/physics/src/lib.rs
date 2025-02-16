@@ -146,13 +146,6 @@ fn physics_system(
         }
     }
 
-    enum PhysicsEvent {
-        EntityEntityCollision(EntityEntityCollisionEvent),
-        EntityBlockCollision(EntityBlockCollisionEvent),
-    }
-
-    let (tx, rx) = std::sync::mpsc::channel::<PhysicsEvent>();
-
     query.iter_mut().for_each(|mut entity| {
         if let Some(drag) = entity.drag {
             entity.velocity.0 *= 1.0 - drag.0 * time.delta_seconds();
@@ -308,7 +301,7 @@ fn physics_system(
                     }
                 }
 
-                tx.send(PhysicsEvent::EntityBlockCollision(event)).unwrap();
+                entity_block_collision_writer.send(event);
             }
         }
 
@@ -333,17 +326,6 @@ fn physics_system(
             }
         }
     });
-
-    for event in rx.try_iter() {
-        match event {
-            PhysicsEvent::EntityEntityCollision(event) => {
-                entity_entity_collision_writer.send(event);
-            }
-            PhysicsEvent::EntityBlockCollision(event) => {
-                entity_block_collision_writer.send(event);
-            }
-        }
-    }
 }
 
 #[allow(clippy::type_complexity)]
