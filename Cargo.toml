@@ -33,10 +33,9 @@ fall_damage = { path = "crates/fall_damage" }
 
 [features]
 # default = ["chat", "combat", "fall_damage", "physics", "utils"]
-# TODO: remove
-default = ["building"]
+default = []
 
-building = ["dep:building"]
+building = ["dep:building", "dep:bvh", "dep:physics"]
 bvh = ["dep:bvh", "dep:utils"]
 chat = ["dep:chat"]
 combat = ["dep:combat", "dep:physics", "dep:fall_damage", "dep:utils"]
@@ -48,7 +47,6 @@ utils = ["dep:utils"]
 valence = { workspace = true }
 tracing = { workspace = true }
 
-
 [dependencies]
 building = { workspace = true, optional = true }
 bvh = { workspace = true, optional = true }
@@ -58,6 +56,10 @@ fall_damage = { workspace = true, optional = true }
 physics = { workspace = true, optional = true }
 utils = { workspace = true, optional = true }
 bevy_time = { workspace = true }
+
+[[example]]
+name = "building"
+required-features = ["building"]
 
 [[example]]
 name = "chat"

@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 valence = { workspace = true }
+bvh = { workspace = true }

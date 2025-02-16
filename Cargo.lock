@@ -408,6 +408,7 @@ dependencies = [
 name = "building"
 version = "0.1.0"
 dependencies = [
+ "bvh",
  "valence",
 ]
 
